@@ -1,6 +1,6 @@
+use crate::bank::BankError::AccountAlreadyExists;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
-use crate::bank::BankError::AccountAlreadyExists;
 
 type OperationId = usize;
 

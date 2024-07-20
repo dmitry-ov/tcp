@@ -44,7 +44,6 @@ pub enum Operation {
     Transfer(String, String, u32),
 }
 
-
 pub struct Lib {}
 
 impl Lib {
@@ -58,13 +57,16 @@ impl Lib {
         let n = stream.read(&mut buffer).unwrap();
         let received_data = &buffer[..n];
 
-        let serde_result: Result<Response, serde_json::Error> = serde_json::from_slice(received_data);
+        let serde_result: Result<Response, serde_json::Error> =
+            serde_json::from_slice(received_data);
         let Ok(response) = serde_result else {
             panic!("Fail create_account response: {:?}", serde_result);
         };
         match response {
             Response::Account(Ok(result)) => Ok(result),
-            Response::Account(Err(_)) => Err(BankError::AccountAlreadyExists("Account Alice already exists".to_string())),
+            Response::Account(Err(_)) => Err(BankError::AccountAlreadyExists(
+                "Account Alice already exists".to_string(),
+            )),
             _ => panic!("Unexpected create_account response: {:?}", response),
         }
     }
@@ -79,7 +81,8 @@ impl Lib {
         let n = stream.read(&mut buffer).unwrap();
         let received_data = &buffer[..n];
 
-        let serde_result: Result<Response, serde_json::Error> = serde_json::from_slice(received_data);
+        let serde_result: Result<Response, serde_json::Error> =
+            serde_json::from_slice(received_data);
         let Ok(response) = serde_result else {
             panic!("Fail increase_account response: {:?}", serde_result);
         };
@@ -100,7 +103,8 @@ impl Lib {
         let n = stream.read(&mut buffer).unwrap();
         let received_data = &buffer[..n];
 
-        let serde_result: Result<Response, serde_json::Error> = serde_json::from_slice(received_data);
+        let serde_result: Result<Response, serde_json::Error> =
+            serde_json::from_slice(received_data);
         let Ok(response) = serde_result else {
             panic!("Fail decrease_account response: {:?}", serde_result);
         };
@@ -121,7 +125,8 @@ impl Lib {
         let n = stream.read(&mut buffer).unwrap();
         let received_data = &buffer[..n];
 
-        let serde_result: Result<Response, serde_json::Error> = serde_json::from_slice(received_data);
+        let serde_result: Result<Response, serde_json::Error> =
+            serde_json::from_slice(received_data);
         let Ok(response) = serde_result else {
             panic!("Fail transfer response: {:?}", serde_result);
         };
@@ -142,7 +147,8 @@ impl Lib {
         let n = stream.read(&mut buffer).unwrap();
         let received_data = &buffer[..n];
 
-        let serde_result: Result<Response, serde_json::Error> = serde_json::from_slice(received_data);
+        let serde_result: Result<Response, serde_json::Error> =
+            serde_json::from_slice(received_data);
         let Ok(response) = serde_result else {
             panic!("Fail get_account_balance response: {:?}", serde_result);
         };
@@ -163,7 +169,8 @@ impl Lib {
         let n = stream.read(&mut buffer).unwrap();
         let received_data = &buffer[..n];
 
-        let serde_result: Result<Response, serde_json::Error> = serde_json::from_slice(received_data);
+        let serde_result: Result<Response, serde_json::Error> =
+            serde_json::from_slice(received_data);
         let Ok(response) = serde_result else {
             panic!("Fail get_history response: {:?}", serde_result);
         };
@@ -182,7 +189,8 @@ impl Lib {
         let n = stream.read(&mut buffer).unwrap();
         let received_data = &buffer[..n];
 
-        let serde_result: Result<Response, serde_json::Error> = serde_json::from_slice(received_data);
+        let serde_result: Result<Response, serde_json::Error> =
+            serde_json::from_slice(received_data);
         let Ok(response) = serde_result else {
             panic!("Fail account_history response: {:?}", serde_result);
         };
