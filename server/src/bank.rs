@@ -1,6 +1,6 @@
-use BankError::AccountAlreadyExists;
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
-use serde::{Serialize, Deserialize};
+use crate::bank::BankError::AccountAlreadyExists;
 
 type OperationId = usize;
 
@@ -105,7 +105,7 @@ impl Bank {
 
     pub fn transfer(&mut self, from: String, to: String, amount: u32) -> Result<(), BankError> {
         if from == to {
-            return Err(BankError::TransferToMyself)
+            return Err(BankError::TransferToMyself);
         }
 
         self.check_exists_account(from.clone())?;
@@ -168,7 +168,10 @@ impl Bank {
 
     fn check_exists_account(&mut self, account: String) -> Result<(), BankError> {
         if !self.accounts.contains(&account) {
-            return Err(AccountAlreadyExists(format!("Account {} does not exist", account)));
+            return Err(AccountAlreadyExists(format!(
+                "Account {} does not exist",
+                account
+            )));
         }
         Ok(())
     }

@@ -1,9 +1,9 @@
 mod bank;
 
+use crate::bank::{Bank, BankError};
+use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
-use serde::{Serialize, Deserialize};
-use crate::bank::{Bank, BankError};
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum Command {
@@ -14,6 +14,7 @@ pub enum Command {
     GetHistory(),
     GetAccountBalance(String),
     Restore(Vec<bank::Operation>),
+    GetAccountHistory(String),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -23,12 +24,11 @@ pub enum Response {
     TransferResult(Result<(), BankError>),
     History(Vec<bank::Operation>),
     AccountBalance(Result<u32, BankError>),
-    AccountHistory(Vec<bank::Operation>),
+    AccountHistory(Option<Vec<bank::Operation>>),
     Restore(),
 }
 
-
-fn handle_request(mut bank: &mut Bank, mut stream: &TcpStream) -> Response {
+fn handle_request(bank: &mut Bank, mut stream: &TcpStream) -> Response {
     let mut buffer = [0; 512];
     let n = stream.read(&mut buffer).unwrap();
 
@@ -41,9 +41,8 @@ fn handle_request(mut bank: &mut Bank, mut stream: &TcpStream) -> Response {
 
     // Выполнение команды
     match command {
-        Command::CreateAccount(account) => {
-            Response::Account(bank.create_account(account))
-        }
+        Command::CreateAccount(account) => Response::Account(bank.create_account(account)),
+
         Command::IncreaseAccount(account, amount) => {
             Response::OperationResult(bank.increase_account(account, amount))
         }
@@ -53,13 +52,14 @@ fn handle_request(mut bank: &mut Bank, mut stream: &TcpStream) -> Response {
         Command::Transfer(from, to, amount) => {
             Response::TransferResult(bank.transfer(from, to, amount))
         }
-        Command::GetHistory() => {
-            Response::History(bank.get_history().clone())
-        }
+        Command::GetHistory() => Response::History(bank.get_history().clone()),
         Command::GetAccountBalance(account) => {
             Response::AccountBalance(bank.get_account_balance(account))
         }
-        Command::Restore (history) => {
+        Command::GetAccountHistory(account) => {
+            Response::AccountHistory(bank.get_account_history(account))
+        }
+        Command::Restore(history) => {
             bank.restore(&history);
             Response::Restore()
         }
@@ -67,7 +67,7 @@ fn handle_request(mut bank: &mut Bank, mut stream: &TcpStream) -> Response {
 }
 
 fn main() -> std::io::Result<()> {
-    let mut bank :Bank = Bank::default();
+    let mut bank: Bank = Bank::default();
     let listener = TcpListener::bind("127.0.0.1:7878")?;
     for stream in listener.incoming() {
         match stream {
@@ -75,7 +75,10 @@ fn main() -> std::io::Result<()> {
                 let response = handle_request(&mut bank, &stream);
                 let response_json = serde_json::to_string(&response).unwrap();
                 println!("Send response: {} \n", &response_json);
-                stream.write(response_json.as_bytes()).unwrap();
+                let result = stream.write(response_json.as_bytes());
+                if let Err(e) = result {
+                    eprintln!("Failed to write to stream: {}", e);
+                }
             }
             Err(e) => {
                 eprintln!("Failed to establish a connection: {}", e);

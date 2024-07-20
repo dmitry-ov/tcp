@@ -1,29 +1,25 @@
-use std::io;
-use std::io::{Read, Write};
-use banklib::Command;
-use banklib::Response;
+use banklib::Lib;
 
-fn main() -> io::Result<()> {
-    let server_address = "127.0.0.1:7878";
-    let mut stream = std::net::TcpStream::connect(server_address)?;
+fn main() {
+    // let mut lib = Lib::new();
+    let alice_account = Lib::create_account("Alice".to_string());
+    println!("{:?}", alice_account);
 
-    let command = Command::CreateAccount("Alice".to_string());
+    let bob_account = Lib::create_account("Bob".to_string());
+    println!("{:?}", bob_account);
 
-    // Сериализация операции в JSON
-    let serialized = serde_json::to_string(&command).unwrap();
+    let _ = Lib::increase_account("Alice".to_string(), 10);
+    let _ = Lib::transfer("Alice".to_string(), "Bob".to_string(), 5);
+    let _ = Lib::decrease_account("Bob".to_string(), 2);
 
-    // Отправка сериализованных данных на сервер
-    stream.write_all(serialized.as_bytes())?;
-    println!("{}", serialized);
+    let a = Lib::get_account_balance("Alice".to_string()); //5
+    println!("Alice balance = {:?}", a);
+    let b = Lib::get_account_balance("Bob".to_string()); //3
+    println!("Bob balance = {:?}", b);
 
-    // Чтение ответа от сервера
-    let mut buffer = [0; 512];
-    let n = stream.read(&mut buffer).unwrap();
+    let history = Lib::get_history();
+    println!("Bank operations history= {:?}", history);
 
-    // Десериализация полученных данных
-    let received_data = &buffer[..n];
-    let response: Response = serde_json::from_slice(received_data).unwrap();
-
-    println!("{:?}", response);
-    Ok(())
+    let vec = Lib::account_history("Alice".to_string());
+    println!("Alice account operations history= {:?}", vec);
 }
