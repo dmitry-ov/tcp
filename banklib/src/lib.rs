@@ -3,7 +3,7 @@ use std::net::TcpStream;
 
 use serde::{Deserialize, Serialize};
 
-const SERVER_ADDRESS: &str = "127.0.0.1:7878";
+// const SERVER_ADDRESS: &str = "127.0.0.1:7878";
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum Command {
@@ -44,11 +44,19 @@ pub enum Operation {
     Transfer(String, String, u32),
 }
 
-pub struct Lib {}
+pub struct Lib {
+    server_address: String,
+}
 
 impl Lib {
-    pub fn create_account(account: String) -> Result<usize, BankError> {
-        let mut stream = TcpStream::connect(crate::SERVER_ADDRESS).unwrap();
+    pub fn new(x: &str) -> Self {
+        Lib {
+            server_address: x.to_string(),
+        }
+    }
+
+    pub fn create_account(&self, account: String) -> Result<usize, BankError> {
+        let mut stream = TcpStream::connect(&self.server_address).unwrap();
         let command = Command::CreateAccount(account);
         let serialized = serde_json::to_string(&command).unwrap();
         stream.write_all(serialized.as_bytes()).unwrap();
@@ -71,8 +79,8 @@ impl Lib {
         }
     }
 
-    pub fn increase_account(account: String, amount: u32) -> Result<(), BankError> {
-        let mut stream = TcpStream::connect(crate::SERVER_ADDRESS).unwrap();
+    pub fn increase_account(&self, account: String, amount: u32) -> Result<(), BankError> {
+        let mut stream = TcpStream::connect(&self.server_address).unwrap();
         let command = Command::IncreaseAccount(account, amount);
         let serialized = serde_json::to_string(&command).unwrap();
         stream.write_all(serialized.as_bytes()).unwrap();
@@ -93,8 +101,8 @@ impl Lib {
         }
     }
 
-    pub fn decrease_account(account: String, amount: u32) -> Result<(), BankError> {
-        let mut stream = TcpStream::connect(crate::SERVER_ADDRESS).unwrap();
+    pub fn decrease_account(&self, account: String, amount: u32) -> Result<(), BankError> {
+        let mut stream = TcpStream::connect(&self.server_address).unwrap();
         let command = Command::DecreaseAccount(account, amount);
         let serialized = serde_json::to_string(&command).unwrap();
         stream.write_all(serialized.as_bytes()).unwrap();
@@ -115,8 +123,8 @@ impl Lib {
         }
     }
 
-    pub fn transfer(from: String, to: String, amount: u32) -> Result<(), BankError> {
-        let mut stream = TcpStream::connect(crate::SERVER_ADDRESS).unwrap();
+    pub fn transfer(&self, from: String, to: String, amount: u32) -> Result<(), BankError> {
+        let mut stream = TcpStream::connect(&self.server_address).unwrap();
         let command = Command::Transfer(from, to, amount);
         let serialized = serde_json::to_string(&command).unwrap();
         stream.write_all(serialized.as_bytes()).unwrap();
@@ -137,8 +145,8 @@ impl Lib {
         }
     }
 
-    pub fn get_account_balance(account: String) -> Result<u32, BankError> {
-        let mut stream = TcpStream::connect(crate::SERVER_ADDRESS).unwrap();
+    pub fn get_account_balance(&self, account: String) -> Result<u32, BankError> {
+        let mut stream = TcpStream::connect(&self.server_address).unwrap();
         let command = Command::GetAccountBalance(account);
         let serialized = serde_json::to_string(&command).unwrap();
         stream.write_all(serialized.as_bytes()).unwrap();
@@ -159,8 +167,8 @@ impl Lib {
         }
     }
 
-    pub fn get_history() -> Vec<Operation> {
-        let mut stream = TcpStream::connect(crate::SERVER_ADDRESS).unwrap();
+    pub fn get_history(&self) -> Vec<Operation> {
+        let mut stream = TcpStream::connect(&self.server_address).unwrap();
         let command = Command::GetHistory();
         let serialized = serde_json::to_string(&command).unwrap();
         stream.write_all(serialized.as_bytes()).unwrap();
@@ -179,8 +187,8 @@ impl Lib {
             _ => panic!("Unexpected get_history response: {:?}", response),
         }
     }
-    pub fn account_history(account: String) -> Vec<Operation> {
-        let mut stream = TcpStream::connect(crate::SERVER_ADDRESS).unwrap();
+    pub fn account_history(&self, account: String) -> Vec<Operation> {
+        let mut stream = TcpStream::connect(&self.server_address).unwrap();
         let command = Command::GetAccountHistory(account);
         let serialized = serde_json::to_string(&command).unwrap();
         stream.write_all(serialized.as_bytes()).unwrap();
@@ -198,5 +206,13 @@ impl Lib {
             Response::AccountHistory(result) => result,
             _ => panic!("Unexpected account_history response: {:?}", response),
         }
+    }
+
+    pub fn restore(&self, operations: Vec<Operation>) {
+        let mut stream = TcpStream::connect(&self.server_address).unwrap();
+        let command = Command::Restore(operations);
+        let serialized = serde_json::to_string(&command).unwrap();
+        println!("restore serialized: {:?}", serialized);
+        stream.write_all(serialized.as_bytes()).unwrap();
     }
 }

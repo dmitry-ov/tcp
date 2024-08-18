@@ -1,9 +1,13 @@
 mod bank;
 
+use std::env;
+use std::process;
+
 use crate::bank::{Bank, BankError};
 use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
+
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum Command {
@@ -25,7 +29,7 @@ pub enum Response {
     History(Vec<bank::Operation>),
     AccountBalance(Result<u32, BankError>),
     AccountHistory(Option<Vec<bank::Operation>>),
-    Restore(),
+    Restore,
 }
 
 fn handle_request(bank: &mut Bank, mut stream: &TcpStream) -> Response {
@@ -61,20 +65,34 @@ fn handle_request(bank: &mut Bank, mut stream: &TcpStream) -> Response {
         }
         Command::Restore(history) => {
             bank.restore(&history);
-            Response::Restore()
+            Response::Restore
         }
     }
 }
 
+
 fn main() -> std::io::Result<()> {
+    let args: Vec<String> = env::args().collect();
+    if args.len() > 1 {
+        println!("got params: {:?}", &args);
+    } else {
+        println!("no params");
+        process::exit(1);
+    }
+    let addr_port = &args[1];
+    let addr_ip = "127.0.0.1:".to_string();
+    //concat port and addr
+    let server_address = addr_ip + addr_port;
+    println!("server_address: {}", &server_address);
+
     let mut bank: Bank = Bank::default();
-    let listener = TcpListener::bind("127.0.0.1:7878")?;
+    let listener = TcpListener::bind(server_address)?;
     for stream in listener.incoming() {
         match stream {
             Ok(mut stream) => {
                 let response = handle_request(&mut bank, &stream);
                 let response_json = serde_json::to_string(&response).unwrap();
-                println!("Send response: {} \n", &response_json);
+                println!("Sent response: {} \n", &response_json);
                 let result = stream.write(response_json.as_bytes());
                 if let Err(e) = result {
                     eprintln!("Failed to write to stream: {}", e);
