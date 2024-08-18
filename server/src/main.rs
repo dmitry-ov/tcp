@@ -8,7 +8,6 @@ use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 
-
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum Command {
     CreateAccount(String),
@@ -69,7 +68,6 @@ fn handle_request(bank: &mut Bank, mut stream: &TcpStream) -> Response {
         }
     }
 }
-
 
 fn main() -> std::io::Result<()> {
     let args: Vec<String> = env::args().collect();

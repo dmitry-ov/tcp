@@ -28,8 +28,12 @@ fn main() {
     let history_len = history.len();
 
     let lib2 = Lib::new(SERVER_ADDRESS2);
-    let _ = lib2.restore(history);
+    lib2.restore(history);
 
     let history2_len = lib2.get_history();
-    println!("history_size = {:?} and new history_size = {:?}", history_len, history2_len.len());
+    println!(
+        "history_size = {:?} and new history_size = {:?}",
+        history_len,
+        history2_len.len()
+    );
 }

@@ -55,6 +55,17 @@ impl Lib {
         }
     }
 
+    /// Creates a new account with the given `account` name.
+    ///
+    /// # Arguments
+    ///
+    /// * `account` - The name of the account to be created.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(usize)` - The ID of the newly created account.
+    /// * `Err(BankError)` - If the account already exists or there was an error during the process.
+    ///
     pub fn create_account(&self, account: String) -> Result<usize, BankError> {
         let mut stream = TcpStream::connect(&self.server_address).unwrap();
         let command = Command::CreateAccount(account);
@@ -79,6 +90,17 @@ impl Lib {
         }
     }
 
+    /// Increases the balance of the given `account` by the given `amount`.
+    ///
+    /// # Arguments
+    ///
+    /// * `account` - The name of the account to be increased.
+    /// * `amount` - The amount to be increased.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(usize)` - The ID of the newly created account.
+    /// * `Err(BankError)` - If the account already exists or there was an error during the process.
     pub fn increase_account(&self, account: String, amount: u32) -> Result<(), BankError> {
         let mut stream = TcpStream::connect(&self.server_address).unwrap();
         let command = Command::IncreaseAccount(account, amount);
@@ -101,6 +123,17 @@ impl Lib {
         }
     }
 
+    /// Decreases the balance of the given `account` by the given `amount`.
+    ///
+    /// # Arguments
+    ///
+    /// * `account` - The name of the account to be decreased.
+    /// * `amount` - The amount to be decreased.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(usize)` - The ID of the newly created account.
+    /// * `Err(BankError)` - If the account already exists or there was an error during the process.
     pub fn decrease_account(&self, account: String, amount: u32) -> Result<(), BankError> {
         let mut stream = TcpStream::connect(&self.server_address).unwrap();
         let command = Command::DecreaseAccount(account, amount);
@@ -123,6 +156,18 @@ impl Lib {
         }
     }
 
+    /// Transfers money from one account to another.
+    ///
+    /// # Arguments
+    ///
+    /// * `from` - The name of the account to transfer from.
+    /// * `to` - The name of the account to transfer to.
+    /// * `amount` - The amount to be transferred.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(usize)` - The ID of the newly created account.
+    /// * `Err(BankError)` - If the account already exists or there was an error during the process.
     pub fn transfer(&self, from: String, to: String, amount: u32) -> Result<(), BankError> {
         let mut stream = TcpStream::connect(&self.server_address).unwrap();
         let command = Command::Transfer(from, to, amount);
@@ -145,6 +190,16 @@ impl Lib {
         }
     }
 
+    /// Returns the account history of the given `account`.
+    ///
+    /// # Arguments
+    ///
+    /// * `account` - The name of the account to be returned.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Vec<Operation>)` - The account history of the given `account`.
+    /// * `Err(BankError)` - If the account does not exist or there was an error during the process.
     pub fn get_account_balance(&self, account: String) -> Result<u32, BankError> {
         let mut stream = TcpStream::connect(&self.server_address).unwrap();
         let command = Command::GetAccountBalance(account);
@@ -167,6 +222,16 @@ impl Lib {
         }
     }
 
+    /// Returns the account history of the given `account`.
+    ///
+    /// # Arguments
+    ///
+    /// * `account` - The name of the account to be returned.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Vec<Operation>)` - The account history of the given `account`.
+    /// * `Err(BankError)` - If the account does not exist or there was an error during the process.
     pub fn get_history(&self) -> Vec<Operation> {
         let mut stream = TcpStream::connect(&self.server_address).unwrap();
         let command = Command::GetHistory();
@@ -187,6 +252,17 @@ impl Lib {
             _ => panic!("Unexpected get_history response: {:?}", response),
         }
     }
+
+    /// Returns the account history of the given `account`.
+    ///
+    /// # Arguments
+    ///
+    /// * `account` - The name of the account to be returned.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Vec<Operation>)` - The account history of the given `account`.
+    /// * `Err(BankError)` - If the account does not exist or there was an error during the process.
     pub fn account_history(&self, account: String) -> Vec<Operation> {
         let mut stream = TcpStream::connect(&self.server_address).unwrap();
         let command = Command::GetAccountHistory(account);
@@ -208,6 +284,11 @@ impl Lib {
         }
     }
 
+    /// Restores the bank state from the given `operations`.
+    ///
+    /// # Arguments
+    ///
+    /// * `operations` - The operations to be restored.
     pub fn restore(&self, operations: Vec<Operation>) {
         let mut stream = TcpStream::connect(&self.server_address).unwrap();
         let command = Command::Restore(operations);
