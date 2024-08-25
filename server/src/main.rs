@@ -1,12 +1,22 @@
-mod bank;
-
-use std::env;
-use std::process;
-
-use crate::bank::{Bank, BankError};
-use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
+use std::ops::Add;
+use std::process;
+
+use clap::Parser;
+use serde::{Deserialize, Serialize};
+
+use crate::bank::{Bank, BankError};
+
+mod bank;
+
+#[derive(Parser, Debug)]
+#[command(name = "Пример")]
+#[command(version = "1.0")]
+#[command(about = "Пример использования clap")]
+struct Args {
+    port: String,
+}
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum Command {
@@ -70,17 +80,13 @@ fn handle_request(bank: &mut Bank, mut stream: &TcpStream) -> Response {
 }
 
 fn main() -> std::io::Result<()> {
-    let args: Vec<String> = env::args().collect();
-    if args.len() > 1 {
-        println!("got params: {:?}", &args);
-    } else {
+    let args = Args::parse();
+    if args.port.is_empty() {
         println!("no params");
         process::exit(1);
     }
-    let addr_port = &args[1];
-    let addr_ip = "127.0.0.1:".to_string();
-    //concat port and addr
-    let server_address = addr_ip + addr_port;
+
+    let server_address = "127.0.0.1:".to_string().add(&args.port);
     println!("server_address: {}", &server_address);
 
     let mut bank: Bank = Bank::default();
