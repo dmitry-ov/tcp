@@ -6,7 +6,8 @@ use std::process;
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 
-use crate::bank::{Bank, BankError};
+use crate::bank::{Bank};
+use protocol_crate::{Response, Command};
 
 mod bank;
 
@@ -16,29 +17,6 @@ mod bank;
 #[command(about = "Пример использования clap")]
 struct Args {
     port: String,
-}
-
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-pub enum Command {
-    CreateAccount(String),
-    IncreaseAccount(String, u32),
-    DecreaseAccount(String, u32),
-    Transfer(String, String, u32),
-    GetHistory(),
-    GetAccountBalance(String),
-    Restore(Vec<bank::Operation>),
-    GetAccountHistory(String),
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub enum Response {
-    Account(Result<usize, BankError>),
-    OperationResult(Result<usize, BankError>),
-    TransferResult(Result<(), BankError>),
-    History(Vec<bank::Operation>),
-    AccountBalance(Result<u32, BankError>),
-    AccountHistory(Option<Vec<bank::Operation>>),
-    Restore,
 }
 
 fn handle_request(bank: &mut Bank, mut stream: &TcpStream) -> Response {

@@ -1,6 +1,6 @@
-use crate::bank::BankError::AccountAlreadyExists;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
+use protocol_crate::{Operation, BankError};
 
 type OperationId = usize;
 
@@ -16,21 +16,6 @@ pub struct Bank {
     history: Vec<Operation>,
 }
 
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-pub enum Operation {
-    CreateAccount(String),
-    IncreaseAccount(String, u32),
-    DecreaseAccount(String, u32),
-    Transfer(String, String, u32),
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub enum BankError {
-    AccountAlreadyExists(String),
-    IncorrectAmount(u32),
-    InsufficientFunds(u32),
-    TransferToMyself,
-}
 
 impl Default for Bank {
     fn default() -> Self {
@@ -50,7 +35,7 @@ impl Bank {
 
     pub fn get_account_balance(&self, account: String) -> Result<u32, BankError> {
         if !self.accounts.contains(&account) {
-            return Err(AccountAlreadyExists(format!(
+            return Err(BankError::AccountAlreadyExists(format!(
                 "Account {} does not exist",
                 account
             )));
@@ -67,7 +52,7 @@ impl Bank {
             self.append_account_index(account, id);
             Ok(id)
         } else {
-            Err(AccountAlreadyExists(format!(
+            Err(BankError::AccountAlreadyExists(format!(
                 "Account {} already exists",
                 account
             )))
@@ -168,7 +153,7 @@ impl Bank {
 
     fn check_exists_account(&mut self, account: String) -> Result<(), BankError> {
         if !self.accounts.contains(&account) {
-            return Err(AccountAlreadyExists(format!(
+            return Err(BankError::AccountAlreadyExists(format!(
                 "Account {} does not exist",
                 account
             )));
