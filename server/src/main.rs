@@ -40,10 +40,10 @@ fn handle_request(bank: &mut Bank, mut stream: &TcpStream) -> Response {
         Command::DecreaseAccount(account, amount) => {
             Response::OperationResult(bank.decrease_account(account, amount))
         }
-        Command::Transfer(from, to, amount) => {
+        Command::Transfer{from, to, amount} => {
             Response::TransferResult(bank.transfer(from, to, amount))
         }
-        Command::GetHistory() => Response::History(bank.get_history().clone()),
+        Command::GetHistory => Response::History(bank.get_history().clone()),
         Command::GetAccountBalance(account) => {
             Response::AccountBalance(bank.get_account_balance(account))
         }

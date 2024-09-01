@@ -5,13 +5,13 @@ use protocol_crate::{Command, Response, BankError, Operation};
 
 const SERVER_ADDRESS: &str = "127.0.0.1:7878";
 
-pub struct Lib {
+pub struct BankClient {
     server_address: String,
 }
 
-impl Lib {
+impl BankClient {
     pub fn new(x: &str) -> Self {
-        Lib {
+        BankClient {
             server_address: x.to_string(),
         }
     }
@@ -28,25 +28,9 @@ impl Lib {
     /// * `Err(BankError)` - If the account already exists or there was an error during the process.
     ///
     pub fn create_account(&self, account: String) -> Result<usize, BankError> {
-        let mut stream = TcpStream::connect(&self.server_address).unwrap();
-        let command = Command::CreateAccount(account);
-        let serialized = serde_json::to_string(&command).unwrap();
-        stream.write_all(serialized.as_bytes()).unwrap();
-
-        let mut buffer = [0; 512];
-        let n = stream.read(&mut buffer).unwrap();
-        let received_data = &buffer[..n];
-
-        let serde_result: Result<Response, serde_json::Error> =
-            serde_json::from_slice(received_data);
-        let Ok(response) = serde_result else {
-            panic!("Fail create_account response: {:?}", serde_result);
-        };
+        let response = self.send_command(Command::CreateAccount(account));
         match response {
-            Response::Account(Ok(result)) => Ok(result),
-            Response::Account(Err(_)) => Err(BankError::AccountAlreadyExists(
-                "Account Alice already exists".to_string(),
-            )),
+            Response::Account(result) => Ok(result?),
             _ => panic!("Unexpected create_account response: {:?}", response),
         }
     }
@@ -63,23 +47,9 @@ impl Lib {
     /// * `Ok(usize)` - The ID of the newly created account.
     /// * `Err(BankError)` - If the account already exists or there was an error during the process.
     pub fn increase_account(&self, account: String, amount: u32) -> Result<(), BankError> {
-        let mut stream = TcpStream::connect(&self.server_address).unwrap();
-        let command = Command::IncreaseAccount(account, amount);
-        let serialized = serde_json::to_string(&command).unwrap();
-        stream.write_all(serialized.as_bytes()).unwrap();
-
-        let mut buffer = [0; 512];
-        let n = stream.read(&mut buffer).unwrap();
-        let received_data = &buffer[..n];
-
-        let serde_result: Result<Response, serde_json::Error> =
-            serde_json::from_slice(received_data);
-        let Ok(response) = serde_result else {
-            panic!("Fail increase_account response: {:?}", serde_result);
-        };
+        let response = self.send_command(Command::IncreaseAccount(account, amount));
         match response {
             Response::OperationResult(Ok(_)) => Ok(()),
-            Response::OperationResult(Err(error)) => Err(error),
             _ => panic!("Unexpected increase_account response: {:?}", response),
         }
     }
@@ -96,23 +66,9 @@ impl Lib {
     /// * `Ok(usize)` - The ID of the newly created account.
     /// * `Err(BankError)` - If the account already exists or there was an error during the process.
     pub fn decrease_account(&self, account: String, amount: u32) -> Result<(), BankError> {
-        let mut stream = TcpStream::connect(&self.server_address).unwrap();
-        let command = Command::DecreaseAccount(account, amount);
-        let serialized = serde_json::to_string(&command).unwrap();
-        stream.write_all(serialized.as_bytes()).unwrap();
-
-        let mut buffer = [0; 512];
-        let n = stream.read(&mut buffer).unwrap();
-        let received_data = &buffer[..n];
-
-        let serde_result: Result<Response, serde_json::Error> =
-            serde_json::from_slice(received_data);
-        let Ok(response) = serde_result else {
-            panic!("Fail decrease_account response: {:?}", serde_result);
-        };
+        let response = self.send_command(Command::DecreaseAccount(account, amount));
         match response {
             Response::OperationResult(Ok(_)) => Ok(()),
-            Response::OperationResult(Err(error)) => Err(error),
             _ => panic!("Unexpected decrease_account response: {:?}", response),
         }
     }
@@ -130,20 +86,7 @@ impl Lib {
     /// * `Ok(usize)` - The ID of the newly created account.
     /// * `Err(BankError)` - If the account already exists or there was an error during the process.
     pub fn transfer(&self, from: String, to: String, amount: u32) -> Result<(), BankError> {
-        let mut stream = TcpStream::connect(&self.server_address).unwrap();
-        let command = Command::Transfer(from, to, amount);
-        let serialized = serde_json::to_string(&command).unwrap();
-        stream.write_all(serialized.as_bytes()).unwrap();
-
-        let mut buffer = [0; 512];
-        let n = stream.read(&mut buffer).unwrap();
-        let received_data = &buffer[..n];
-
-        let serde_result: Result<Response, serde_json::Error> =
-            serde_json::from_slice(received_data);
-        let Ok(response) = serde_result else {
-            panic!("Fail transfer response: {:?}", serde_result);
-        };
+        let response = self.send_command(Command::Transfer { from, to, amount });
         match response {
             Response::TransferResult(Ok(_)) => Ok(()),
             Response::TransferResult(Err(error)) => Err(error),
@@ -162,23 +105,9 @@ impl Lib {
     /// * `Ok(Vec<Operation>)` - The account history of the given `account`.
     /// * `Err(BankError)` - If the account does not exist or there was an error during the process.
     pub fn get_account_balance(&self, account: String) -> Result<u32, BankError> {
-        let mut stream = TcpStream::connect(&self.server_address).unwrap();
-        let command = Command::GetAccountBalance(account);
-        let serialized = serde_json::to_string(&command).unwrap();
-        stream.write_all(serialized.as_bytes()).unwrap();
-
-        let mut buffer = [0; 512];
-        let n = stream.read(&mut buffer).unwrap();
-        let received_data = &buffer[..n];
-
-        let serde_result: Result<Response, serde_json::Error> =
-            serde_json::from_slice(received_data);
-        let Ok(response) = serde_result else {
-            panic!("Fail get_account_balance response: {:?}", serde_result);
-        };
+        let response = self.send_command(Command::GetAccountBalance(account));
         match response {
             Response::AccountBalance(Ok(result)) => Ok(result),
-            Response::AccountBalance(Err(error)) => Err(error),
             _ => panic!("Unexpected get_account_balance response: {:?}", response),
         }
     }
@@ -194,20 +123,7 @@ impl Lib {
     /// * `Ok(Vec<Operation>)` - The account history of the given `account`.
     /// * `Err(BankError)` - If the account does not exist or there was an error during the process.
     pub fn get_history(&self) -> Vec<Operation> {
-        let mut stream = TcpStream::connect(&self.server_address).unwrap();
-        let command = Command::GetHistory();
-        let serialized = serde_json::to_string(&command).unwrap();
-        stream.write_all(serialized.as_bytes()).unwrap();
-
-        let mut buffer = [0; 512];
-        let n = stream.read(&mut buffer).unwrap();
-        let received_data = &buffer[..n];
-
-        let serde_result: Result<Response, serde_json::Error> =
-            serde_json::from_slice(received_data);
-        let Ok(response) = serde_result else {
-            panic!("Fail get_history response: {:?}", serde_result);
-        };
+        let response = self.send_command(Command::GetHistory);
         match response {
             Response::History(result) => result,
             _ => panic!("Unexpected get_history response: {:?}", response),
@@ -225,22 +141,9 @@ impl Lib {
     /// * `Ok(Vec<Operation>)` - The account history of the given `account`.
     /// * `Err(BankError)` - If the account does not exist or there was an error during the process.
     pub fn account_history(&self, account: String) -> Vec<Operation> {
-        let mut stream = TcpStream::connect(&self.server_address).unwrap();
-        let command = Command::GetAccountHistory(account);
-        let serialized = serde_json::to_string(&command).unwrap();
-        stream.write_all(serialized.as_bytes()).unwrap();
-
-        let mut buffer = [0; 512];
-        let n = stream.read(&mut buffer).unwrap();
-        let received_data = &buffer[..n];
-
-        let serde_result: Result<Response, serde_json::Error> =
-            serde_json::from_slice(received_data);
-        let Ok(response) = serde_result else {
-            panic!("Fail account_history response: {:?}", serde_result);
-        };
+        let response = self.send_command(Command::GetAccountHistory(account));
         match response {
-            Response::AccountHistory(result) => result,
+            Response::AccountHistory(result) => result.unwrap(),
             _ => panic!("Unexpected account_history response: {:?}", response),
         }
     }
@@ -251,10 +154,36 @@ impl Lib {
     ///
     /// * `operations` - The operations to be restored.
     pub fn restore(&self, operations: Vec<Operation>) {
+        let response = self.send_command(Command::Restore(operations));
+        match response {
+            Response::Restore => (),
+            _ => panic!("Unexpected account_history response: {:?}", response),
+        }
+    }
+
+    /// Sends a command to the server and waits for the response.
+    ///
+    /// # Arguments
+    ///
+    /// * `command` - The command to be sent.
+    ///
+    /// # Returns
+    ///
+    /// * `Response` - The response from the server.
+    fn send_command(&self, command: Command) -> Response {
         let mut stream = TcpStream::connect(&self.server_address).unwrap();
-        let command = Command::Restore(operations);
         let serialized = serde_json::to_string(&command).unwrap();
-        println!("restore serialized: {:?}", serialized);
         stream.write_all(serialized.as_bytes()).unwrap();
+
+        let mut buffer = [0; 512];
+        let n = stream.read(&mut buffer).unwrap();
+        let received_data = &buffer[..n];
+
+        let serde_result: Result<Response, serde_json::Error> =
+            serde_json::from_slice(received_data);
+        let Ok(response) = serde_result else {
+            panic!("Fail create_account response: {:?}", serde_result);
+        };
+        response
     }
 }

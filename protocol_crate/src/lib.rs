@@ -6,8 +6,12 @@ pub enum Command {
     CreateAccount(String),
     IncreaseAccount(String, u32),
     DecreaseAccount(String, u32),
-    Transfer(String, String, u32),
-    GetHistory(),
+    Transfer {
+        from: String,
+        to: String,
+        amount: u32,
+    },
+    GetHistory,
     GetAccountBalance(String),
     Restore(Vec<Operation>),
     GetAccountHistory(String),
@@ -38,4 +42,5 @@ pub enum BankError {
     IncorrectAmount(u32),
     InsufficientFunds(u32),
     TransferToMyself,
+    AccountDoesNotExist(String)
 }

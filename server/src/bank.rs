@@ -153,7 +153,7 @@ impl Bank {
 
     fn check_exists_account(&mut self, account: String) -> Result<(), BankError> {
         if !self.accounts.contains(&account) {
-            return Err(BankError::AccountAlreadyExists(format!(
+            return Err(BankError::AccountDoesNotExist(format!(
                 "Account {} does not exist",
                 account
             )));
